@@ -5,8 +5,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 public class GroupOneApp {
+
+    private static class Event {
+        private final UUID uuid;
+        private String time;
+        private String title;
+        private String description;
+        private String date;
+        private String hEmail;
+
+        public Event(UUID UID, String d, String tim, String titl, String descr, String mail){
+            if(UID == null){uuid = UUID.randomUUID();}
+            else{uuid = UID;}
+
+            date = d;
+            time = tim;
+            title = titl;
+            description = descr;
+            hEmail = mail;
+        }
+    }
 
     public static List<String> getCommands(String fileName) throws FileNotFoundException{
         if(fileName == null) return new ArrayList<String>(0);
