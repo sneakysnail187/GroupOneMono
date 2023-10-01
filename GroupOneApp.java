@@ -1,50 +1,117 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
-import java.util.UUID;
+import java.io.*;
+import org.json.simple.*;
+import org.json.simple.parser.*;
+import java.util.*;
 
 public class GroupOneApp {
 
-    private static class Event {
-        private final UUID uuid;
-        private String time;
-        private String title;
-        private String description;
-        private String date;
-        private String hEmail;
+    static Scanner input = new Scanner(System.in);
+    static JSONParser parser = new JSONParser();
+    final static String fileName = "jsonData.json";
 
-        public Event(UUID UID, String d, String tim, String titl, String descr, String mail){
-            if(UID == null){uuid = UUID.randomUUID();}
-            else{uuid = UID;}
-
-            date = d;
-            time = tim;
-            title = titl;
-            description = descr;
-            hEmail = mail;
+    public static void writeEvent(String uuid, String date, String time, String description, String hEmail) {
+        JSONObject obj = new JSONObject();
+        obj.put("UUID", uuid);
+        obj.put("date", date);
+        obj.put("time", time);
+        obj.put("desc", description);
+        obj.put("host", hEmail);
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            reader.close();
+            JSONArray events = (JSONArray) jsobj.get("events");
+            events.add(obj);
+            jsobj.put("events", events);
+            FileWriter writer = new FileWriter(fileName);
+            writer.write(jsobj.toJSONString());
+            writer.flush();
+            writer.close();
+        } catch (Exception e){
+            System.out.println(e);
         }
     }
 
-    public static List<String> getCommands(String fileName) throws FileNotFoundException{
-        if(fileName == null) return new ArrayList<String>(0);
-
-        File file = new File(fileName);
-        if(! (file.exists() && file.canRead())) {
-            System.err.println("Cannot access file! Non-existent or read access restricted");
-            return new ArrayList<String>(0);
+    public static void getEvents() {
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            JSONArray events = (JSONArray) jsobj.get("events");
+            System.out.println(events.toString());
+            reader.close();
+        } catch (Exception e) {
+            System.out.println(e);
         }
+    }
 
-        List<String> commandLines = new ArrayList<String>(32);
-        Scanner scanner = new Scanner(file);
-        while(scanner.hasNextLine()) {
-            commandLines.add(scanner.nextLine());
+    public static void clearEvents() {
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            JSONArray participants = (JSONArray) jsobj.get("participants");
+            reader.close();
+            FileWriter writer = new FileWriter(fileName);
+            JSONObject obj = new JSONObject();
+            obj.put("events", new JSONArray());
+            obj.put("participants", participants);
+            writer.write(obj.toJSONString());
+            writer.flush();
+            writer.close();
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        scanner.close();
-        return commandLines;
+    }
+
+    public static void writeParticipant(String uuid, String event, String name, String email) {
+        JSONObject obj = new JSONObject();
+        obj.put("UUID", uuid);
+        obj.put("event", event);
+        obj.put("name", name);
+        obj.put("email", email);
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            reader.close();
+            JSONArray events = (JSONArray) jsobj.get("participants");
+            events.add(obj);
+            jsobj.put("participants", events);
+            FileWriter writer = new FileWriter(fileName);
+            writer.write(jsobj.toJSONString());
+            writer.flush();
+        } catch (Exception e){
+            System.out.println(e);
+        }
+    }
+
+    public static void getParticipants(String regex) {
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            JSONArray participants = (JSONArray) jsobj.get("participants");
+            //TODO: return everything from participants where the EVENT UUID matches supplied regex
+            System.out.println(participants);
+            reader.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public static void clearParticipants() {
+        try {
+            FileReader reader = new FileReader(fileName);
+            JSONObject jsobj = (JSONObject) parser.parse(reader);
+            JSONArray events = (JSONArray) jsobj.get("events");
+            reader.close();
+            FileWriter writer = new FileWriter(fileName);
+            JSONObject obj = new JSONObject();
+            obj.put("events", events);
+            obj.put("participants", new JSONArray());
+            writer.write(obj.toJSONString());
+            writer.flush();
+            writer.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     public static void processCmds(String[] cArgs) throws IOException, CloneNotSupportedException{
@@ -54,77 +121,61 @@ public class GroupOneApp {
 
         String command = cArgs[0];
 
-        if(command.trim().equalsIgnoreCase("setState")){
-            ArrayList<Character> c = new ArrayList<>(9);
-            int index = 0;
-            for(int i = 1; i < 4; i++){
-                List<Character> temp = cArgs[i].chars().mapToObj((x) -> Character.valueOf((char)x)).collect(Collectors.toList());
-                for(char t : temp){
-                    c.add(index, t);
-                    index++;
-                }
-            }
+        if(command.trim().equalsIgnoreCase("createEvent")){
+            //TODO: input validation
+            String uuid = promptUser("UUID: (leave empty for random) ");
+            uuid = uuid == "" ? UUID.randomUUID().toString() : uuid;
+            String date = promptUser("Event Date: ");
+            String time = promptUser("Event Time: ");
+            String desc = promptUser("Description: ");
+            String email = promptUser("Host Email: ");
+            writeEvent(uuid, date, time, desc, email);
         }
 
-        else if(command.trim().equalsIgnoreCase("printState")){
+        else if(command.trim().equalsIgnoreCase("getEvents")) {
+            getEvents();
+            //TODO: do we want to supply a regex here?
         }
 
-        else if(command.trim().equalsIgnoreCase("move")){
+        else if (command.trim().equalsIgnoreCase("clearEvents")) {
+            clearEvents();
         }
 
-        else if(command.trim().equalsIgnoreCase("randomizeState")){
-            int n = 0;
-
-            n = Integer.parseInt(cArgs[1]);
-            //p.randomizeState(n);
-            //a.current.data.randomizeState(n);
-            //b.root.data.randomizeState(n);
+        else if(command.trim().equalsIgnoreCase("createParticipant")){
+            //TODO: input validation
+            String uuid = promptUser("Participant UUID: (leave empty for random) ");
+            uuid = uuid == "" ? UUID.randomUUID().toString() : uuid;
+            String date = promptUser("Event UUID: ");
+            String time = promptUser("Participant Name: ");
+            String email = promptUser("Participant Email: ");
+            writeParticipant(uuid, date, time, email);
         }
 
-        else if(command.trim().equalsIgnoreCase("solveAstar")){
-            //new solveAstar(p, cArgs[1].trim());
+        else if(command.trim().equalsIgnoreCase("getParticipants")){
+            String regex = promptUser("Regex for event UUID: ");
+            getParticipants(regex);
         }
 
-        else if(command.trim().equalsIgnoreCase("solveBeam")){
-            int k = 0;
-            
-            k = Integer.parseInt(cArgs[1]);
-            //b.solveBeam(k);
-        }
-
-        else if(command.trim().equalsIgnoreCase("maxNodes")){
-            int m = 0;
-
-            m = Integer.parseInt(cArgs[1]);
+        else if (command.trim().equalsIgnoreCase("clearParticipants")) {
+            clearParticipants();
         }
     }
 
+    public static String promptUser(String prompt) {
+        System.out.println(prompt);
+        return(input.nextLine());
+    }
+
+
     public static void main(String[] args) throws Exception {
-
-        Scanner input = new Scanner(System.in);
-        String next;
-        String[] one;
-        
         do{
-            System.out.println("Type \"load [filename]\" to fetch commands from a text file or \"stop\" to kill the program");
-            next = input.nextLine();
-            one = next.split(" ");
-            String command = one[0];
-
-            if(command.trim().equalsIgnoreCase("load")){
-                List<String> cmdLines = getCommands(one[1]);
-                for(String c : cmdLines){
-                    String[] cArgs = c.split(" ");
-                    processCmds(cArgs);
-                }
-            }
-
-            else if(command.trim().equalsIgnoreCase("stop")){
+            //TODO: put syntax in readme or here
+            String[] split = promptUser("Use createEvent and getEvents to create or view existing events.\nUse createParticipant and getParticipants to create or view existing participants. \nUse \"stop\" to kill the program").split(" ");
+            String command = split[0];
+            if(command.trim().equalsIgnoreCase("stop")){
                 break;
-            }
-
-            else{
-                processCmds(one);
+            } else {
+                processCmds(split);
             }
         } while(true);
         System.out.println("Program terminated");
