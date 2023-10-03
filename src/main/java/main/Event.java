@@ -55,7 +55,13 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         return this;
     }
     public static Event create(String uuid, String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
-        return new Event(UUID.fromString(uuid), validateDateTime(date, time), title, description, validateEmail(hEmail)).validateEmail();
+        UUID uid;
+        try {
+            uid = UUID.fromString(uuid);
+        } catch (IllegalArgumentException e) {
+            throw new HandledIllegalValueException("UUID is invalid, please try again");
+        }
+        return new Event(uid, validateDateTime(date, time), title, description, validateEmail(hEmail)).validateEmail();
     }
     public static Event create(String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
         return Event.create(UUID.randomUUID().toString(), date, time, title, description, validateEmail(hEmail));
