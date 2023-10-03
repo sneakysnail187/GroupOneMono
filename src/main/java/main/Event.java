@@ -14,13 +14,12 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         //YYYY-MM-DD
         String[] dateSplit = date.split("-");
         //HH:mm (AM|PM)
-        String[] timeSplit = time.split("-");
+        String[] timeSplit = time.split(" |:");
 
         timeSplit[0] = "" + (
-                Integer.parseInt(timeSplit[0].split(" ")[0])
-                        + (timeSplit[1].contains("PM") ? 12 : 0)
+                Integer.parseInt(timeSplit[0])
+                        + (timeSplit[2].contains("PM") ? 12 : 0)
         );
-        timeSplit[1] = timeSplit[1].split(" ")[0];
         //TODO: parse
         int year = Integer.parseInt(dateSplit[0]);
         Month month = Month.of(Integer.parseInt(dateSplit[1]));
@@ -28,7 +27,7 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         int hour = Integer.parseInt(timeSplit[0]);
         int minute = Integer.parseInt(timeSplit[1]);
         assert false; //remove after parsing is implemented
-        return LocalDateTime.of(LocalDate.of(day, month, year), LocalTime.of(hour, minute));
+        return LocalDateTime.of(LocalDate.of(year, month, day), LocalTime.of(hour, minute));
     }
     public static String validateEmail(String email) throws HandledIllegalValueException {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
@@ -57,7 +56,7 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
     public static Event create(String uuid, String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
         return new Event(UUID.fromString(uuid), validateDateTime(date, time), title, description, validateEmail(hEmail)).validateEmail();
     }
-    public Event create(String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
+    public static Event create(String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
         return Event.create(UUID.randomUUID().toString(), date, time, title, description, validateEmail(hEmail));
     }
     public static class HandledIllegalValueException extends Exception{
