@@ -99,10 +99,10 @@ public class Main {
         String title;
 
         @Parameters(index = "4")
-        String description;
-
-        @Parameters(index = "5")
         String hostEmail;
+
+        @Parameters(index = "5..*")
+        String[] description;
 
         @Option(names = {"-ei", "--event-id"})
         String eventID;
@@ -114,13 +114,14 @@ public class Main {
                 return 1;
             }
 
+            String joinedDesc = String.join(" ", description);
             if(invalidLength(title, "title", EVENT_TITLE_MAX_LENGTH)
-                    || invalidLength(description, "description", EVENT_DESC_MAX_LENGTH)
+                    || invalidLength(joinedDesc, "description", EVENT_DESC_MAX_LENGTH)
                     || invalidEmail(hostEmail)){
                 return 1;
             }
 
-            dbClient.addEvent(new Event(getOrCreateUUID(eventID), dateTime, title, description, hostEmail));
+            dbClient.addEvent(new Event(getOrCreateUUID(eventID), dateTime, title, joinedDesc, hostEmail));
             return 0;
         }
     }
@@ -132,22 +133,23 @@ public class Main {
         String eventID;
 
         @Parameters(index = "1")
-        String name;
-
-        @Parameters(index = "2")
         String email;
+
+        @Parameters(index = "2..*")
+        String name;
 
         @Option(names = {"-pi", "--participant-id"})
         String participantID;
 
         @Override
         public Integer call() throws SQLException {
-            if(invalidLength(name, "name", PARTICIPANT_NAME_MAX_LENGTH) || invalidEmail(email)){
+            String joinedName = String.join(" ", name);
+            if(invalidLength(joinedName, "name", PARTICIPANT_NAME_MAX_LENGTH) || invalidEmail(email)){
                 return 1;
             }
 
             dbClient.addParticipant(
-                    new Participant(getOrCreateUUID(participantID), UUID.fromString(eventID), name, email)
+                    new Participant(getOrCreateUUID(participantID), UUID.fromString(eventID), joinedName, email)
             );
             return 0;
         }
