@@ -1,7 +1,5 @@
 package main.java.main;
 
-import jdk.incubator.foreign.ResourceScope;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Month;
@@ -13,17 +11,26 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
     private static final int DESCRIPTION_MAX_LENGTH = 600;
     //returns the LocalDateTime if the date and the time are valid
     private static LocalDateTime validateDateTime(String date, String time) throws HandledIllegalValueException {
+        //YYYY-MM-DD
+        String[] dateSplit = date.split("-");
+        //HH:mm (AM|PM)
+        String[] timeSplit = time.split("-");
+
+        timeSplit[0] = "" + (
+                Integer.parseInt(timeSplit[0].split(" ")[0])
+                        + (timeSplit[1].contains("PM") ? 12 : 0)
+        );
+        timeSplit[1] = timeSplit[1].split(" ")[0];
         //TODO: parse
-        int day = 0;
-        Month month = null;
-        int year = 0;
-        int hour = 0;
-        int minute = 0;
-        int second = 0;
+        int year = Integer.parseInt(dateSplit[0]);
+        Month month = Month.of(Integer.parseInt(dateSplit[1]));
+        int day = Integer.parseInt(dateSplit[2]);
+        int hour = Integer.parseInt(timeSplit[0]);
+        int minute = Integer.parseInt(timeSplit[1]);
         assert false; //remove after parsing is implemented
-        return LocalDateTime.of(LocalDate.of(day, month, year), LocalTime.of(hour, minute, second));
+        return LocalDateTime.of(LocalDate.of(day, month, year), LocalTime.of(hour, minute));
     }
-    public static String validate(String email) throws HandledIllegalValueException {
+    public static String validateEmail(String email) throws HandledIllegalValueException {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
                 "[a-zA-Z0-9_+&*-]+)*@" +
                 "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
@@ -36,7 +43,7 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         }
         return email;
     }
-    public Event validate() throws HandledIllegalValueException{
+    public Event validateEmail() throws HandledIllegalValueException{
         //these should be handled
         if (title.length() > TITLE_MAX_LENGTH) {
             throw new HandledIllegalValueException(String.format("Title may not exceed %d", TITLE_MAX_LENGTH));
@@ -48,10 +55,10 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         return this;
     }
     public static Event create(String uuid, String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
-        return new Event(UUID.fromString(uuid), validateDateTime(date, time), title, description, validate(hEmail)).validate();
+        return new Event(UUID.fromString(uuid), validateDateTime(date, time), title, description, validateEmail(hEmail)).validateEmail();
     }
     public Event create(String date, String time, String title, String description, String hEmail) throws HandledIllegalValueException{
-        return Event.create(UUID.randomUUID().toString(), date, time, title, description, validate(hEmail));
+        return Event.create(UUID.randomUUID().toString(), date, time, title, description, validateEmail(hEmail));
     }
     public static class HandledIllegalValueException extends Exception{
         public HandledIllegalValueException(String message) {
