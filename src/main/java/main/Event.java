@@ -11,22 +11,23 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
     private static final int DESCRIPTION_MAX_LENGTH = 600;
     //returns the LocalDateTime if the date and the time are valid
     private static LocalDateTime validateDateTime(String date, String time) throws HandledIllegalValueException {
-        //YYYY-MM-DD
+        if (!date.matches("\\d{4}-\\d{2}-\\d{2}")){
+            throw new HandledIllegalValueException("Date must be formatted YYYY-MM-DD");
+        }
+        if (!time.matches("\\d{2}:\\d{2}(?:(AM)|(PM))")){
+            throw new HandledIllegalValueException("Time must be in the format \"HH:mm (AM|PM)\"");
+        }
         String[] dateSplit = date.split("-");
-        //HH:mm (AM|PM)
         String[] timeSplit = time.split(" |:");
-
-        timeSplit[0] = "" + (
-                Integer.parseInt(timeSplit[0])
-                        + (timeSplit[2].contains("PM") ? 12 : 0)
-        );
-        //TODO: parse
+        int hour = Integer.parseInt(timeSplit[0]);
+        if (hour < 1 || hour > 12){
+            throw new HandledIllegalValueException("Hour must be in the range [1,12] ");
+        }
+        hour += (timeSplit[2].contains("PM") ? 12 : 0);
         int year = Integer.parseInt(dateSplit[0]);
         Month month = Month.of(Integer.parseInt(dateSplit[1]));
         int day = Integer.parseInt(dateSplit[2]);
-        int hour = Integer.parseInt(timeSplit[0]);
         int minute = Integer.parseInt(timeSplit[1]);
-        assert false; //remove after parsing is implemented
         return LocalDateTime.of(LocalDate.of(year, month, day), LocalTime.of(hour, minute));
     }
     public static String validateEmail(String email) throws HandledIllegalValueException {
