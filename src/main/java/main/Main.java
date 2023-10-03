@@ -84,7 +84,7 @@ public class Main {
         return uuidValue == null || uuidValue.isEmpty() ? UUID.randomUUID() : UUID.fromString(uuidValue);
     }
 
-    @Command(name = "event", mixinStandardHelpOptions = true)
+    @Command(name = "event", mixinStandardHelpOptions = true, version="1.0")
     private static class EventCommand implements Callable<Integer> {
 
         @Parameters(index = "0")
@@ -126,7 +126,7 @@ public class Main {
         }
     }
 
-    @Command(name = "participant", mixinStandardHelpOptions = true)
+    @Command(name = "participant", mixinStandardHelpOptions = true, version="1.0")
     private static class ParticipantCommand implements Callable<Integer> {
 
         @Parameters(index = "0")
@@ -155,7 +155,7 @@ public class Main {
 
     }
 
-    @Command(name = "list-events", mixinStandardHelpOptions = true)
+    @Command(name = "list-events", mixinStandardHelpOptions = true, version="1.0")
     private static class ListEventsCommand implements Callable<Integer> {
 
         @Override
@@ -186,7 +186,7 @@ public class Main {
 
     }
 
-    @Command(name = "list-participants", mixinStandardHelpOptions = true)
+    @Command(name = "list-participants", mixinStandardHelpOptions = true, version="1.0")
     private static class ListParticipantsCommand implements Callable<Integer> {
 
         @Parameters(index = "0")
