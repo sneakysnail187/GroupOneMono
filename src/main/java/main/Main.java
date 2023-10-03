@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -164,12 +165,18 @@ public class Main {
 
             for(Event event : events){
                 sb.append(String.format(
-                        "%s on %d-%d-%d at %d:%d | Host Email: %s | Event ID: %s | '%s' \n\n",
+                        "%s on %s at %s | Host Email: %s | Event ID: %s | '%s' \n\n",
                         event.title(),
-                        event.eventDateTime().getYear(), event.eventDateTime().getMonthValue(),
-                        event.eventDateTime().getDayOfMonth(),
-                        event.eventDateTime().getHour(), event.eventDateTime().getMinute(),
-                        event.hEmail(), event.uuid(), event.description()
+                        event.eventDateTime().toLocalDate().format(
+                                DateTimeFormatter.ISO_LOCAL_DATE
+                        ),
+                        //event.eventDateTime().getHour(), event.eventDateTime().getMinute(),
+                        event.eventDateTime().toLocalTime().format(
+                                DateTimeFormatter.ofPattern("hh:mm a")
+                        ),
+                        event.hEmail(),
+                        event.uuid(),
+                        event.description()
                 ));
             }
 
@@ -209,6 +216,7 @@ public class Main {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
         String line;
 
+        System.out.print("$> ");
         while((line = input.readLine()) != null){
             String[] words = line.split("\\s");
             String[] commandArgs = new String[words.length - 1];
@@ -221,6 +229,7 @@ public class Main {
                 case "list-participants" -> new CommandLine(new ListParticipantsCommand()).execute(commandArgs);
                 default -> System.out.println("Error: unknown command");
             }
+            System.out.print("$> ");
         }
     }
 
