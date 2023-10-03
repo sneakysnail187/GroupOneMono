@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
@@ -19,70 +20,7 @@ import java.util.regex.Pattern;
 
 public class Main {
 
-    private static final int EVENT_TITLE_MAX_LENGTH = 255;
-    private static final int EVENT_DESC_MAX_LENGTH = 600;
-    private static final int PARTICIPANT_NAME_MAX_LENGTH = 600;
-
-    private static final Pattern DATE_PATTERN = Pattern.compile("^([0-9]{4})-([0-9]{2})-([0-9]{2})$");
-    private static final Pattern TIME_PATTERN = Pattern.compile("^([0-9]{2}):([0-9]{2})$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^\\w+@\\w+\\.\\w+$");
-
     private static DbClient dbClient;
-
-    private static LocalDateTime getLocalDateTime(String date, String time, String ampm){
-        Matcher dateMatcher = DATE_PATTERN.matcher(date);
-        if(!dateMatcher.matches()){
-            System.out.println("Error: date must be in format YYYY-MM-DD");
-            return null;
-        }
-
-        int year = Integer.parseInt(dateMatcher.group(1));
-        int month = Integer.parseInt(dateMatcher.group(2));
-        int dayOfMonth = Integer.parseInt(dateMatcher.group(3));
-
-        Matcher timeMatcher = TIME_PATTERN.matcher(time);
-        if(!timeMatcher.matches()){
-            System.out.println("Error: time must be in format HH:MM");
-            return null;
-        }
-
-        int hour = Integer.parseInt(timeMatcher.group(1));
-        int minute = Integer.parseInt(timeMatcher.group(2));
-
-        boolean isPM = ampm.equalsIgnoreCase("PM");
-        if(!isPM && !ampm.equalsIgnoreCase("AM")){
-            System.out.println("Error: unexpected value for AM/PM");
-            return null;
-        }
-
-        if(isPM){
-            hour += 12;
-        }
-
-        return LocalDateTime.of(year, month, dayOfMonth, hour, minute);
-    }
-
-    private static boolean invalidLength(String text, String name, int maxLength){
-        if(text.length() <= maxLength){
-            return false;
-        }else{
-            System.out.printf("Error: %s cannot exceed %d characters\n", name, maxLength);
-            return true;
-        }
-    }
-
-    private static boolean invalidEmail(String email){
-        if(EMAIL_PATTERN.matcher(email).matches()){
-            return false;
-        }else{
-            System.out.println("Error: invalid email address");
-            return true;
-        }
-    }
-
-    private static UUID getOrCreateUUID(String uuidValue){
-        return uuidValue == null || uuidValue.isEmpty() ? UUID.randomUUID() : UUID.fromString(uuidValue);
-    }
 
     @Command(name = "event", mixinStandardHelpOptions = true)
     private static class EventCommand implements Callable<Integer> {
@@ -110,18 +48,16 @@ public class Main {
 
         @Override
         public Integer call() throws SQLException {
-            LocalDateTime dateTime = getLocalDateTime(date, time, ampm);
-            if(dateTime == null){
-                return 1;
-            }
+            try {
 
-            if(invalidLength(title, "title", EVENT_TITLE_MAX_LENGTH)
-                    || invalidLength(description, "description", EVENT_DESC_MAX_LENGTH)
-                    || invalidEmail(hostEmail)){
-                return 1;
+                if(Objects.nonNull(eventID)) {
+                    dbClient.addEvent(Event.create(eventID, date, "%s %s".formatted(time, ampm), title, description, hostEmail));
+                } else {
+                    dbClient.addEvent(Event.create(date, "%s %s".formatted(time, ampm), title, description, hostEmail));
+                }
+            } catch(Event.HandledIllegalValueException e){
+                System.out.println("Failed to create event: " + e.getMessage());
             }
-
-            dbClient.addEvent(new Event(getOrCreateUUID(eventID), dateTime, title, description, hostEmail));
             return 0;
         }
     }
@@ -143,13 +79,19 @@ public class Main {
 
         @Override
         public Integer call() throws SQLException {
-            if(invalidLength(name, "name", PARTICIPANT_NAME_MAX_LENGTH) || invalidEmail(email)){
-                return 1;
+            try {
+                if (participantID != null) {
+                    dbClient.addParticipant(
+                            Participant.create(participantID, eventID, name, email)
+                    );
+                } else {
+                    dbClient.addParticipant(
+                            Participant.create(eventID, name, email)
+                    );
+                }
+            } catch (Event.HandledIllegalValueException e){
+                System.out.println("Failed to create participant: " + e.getMessage());
             }
-
-            dbClient.addParticipant(
-                    new Participant(getOrCreateUUID(participantID), UUID.fromString(eventID), name, email)
-            );
             return 0;
         }
 
@@ -159,7 +101,7 @@ public class Main {
     private static class ListEventsCommand implements Callable<Integer> {
 
         @Override
-        public Integer call() throws SQLException, Event.HandledIllegalValueException {
+        public Integer call() throws SQLException {
             List<Event> events = dbClient.getEvents();
             StringBuilder sb = new StringBuilder();
 
@@ -193,7 +135,7 @@ public class Main {
         String eventID;
 
         @Override
-        public Integer call() throws SQLException, Event.HandledIllegalValueException {
+        public Integer call() throws SQLException{
             List<Participant> participants = dbClient.getParticipants(eventID);
             StringBuilder sb = new StringBuilder();
 
