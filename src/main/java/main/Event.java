@@ -12,10 +12,10 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
     //returns the LocalDateTime if the date and the time are valid
     private static LocalDateTime validateDateTime(String date, String time) throws HandledIllegalValueException {
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")){
-            throw new HandledIllegalValueException("Date must be formatted YYYY-MM-DD");
+            throw new HandledIllegalValueException("Date must be formatted YYYY-MM-DD: " + date);
         }
-        if (!time.matches("\\d{2}:\\d{2}(?:(AM)|(PM))")){
-            throw new HandledIllegalValueException("Time must be in the format \"HH:mm (AM|PM)\"");
+        if (!time.matches("\\d{1,2}:\\d{1,2} (?:AM|PM)")){
+            throw new HandledIllegalValueException("Time must be in the format \"HH:mm (AM|PM)\": " + time);
         }
         String[] dateSplit = date.split("-");
         String[] timeSplit = time.split(" |:");
