@@ -12,10 +12,10 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
     //returns the LocalDateTime if the date and the time are valid
     private static LocalDateTime validateDateTime(String date, String time) throws HandledIllegalValueException {
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")){
-            throw new HandledIllegalValueException("Date must be formatted YYYY-MM-DD: " + date);
+            throw new HandledIllegalValueException("Date must be formatted YYYY-MM-DD, was " + date);
         }
         if (!time.matches("\\d{1,2}:\\d{1,2} (?:AM|PM)")){
-            throw new HandledIllegalValueException("Time must be in the format \"HH:mm (AM|PM)\": " + time);
+            throw new HandledIllegalValueException("Time must be in the format \"HH:mm (AM|PM)\", was " + time);
         }
         String[] dateSplit = date.split("-");
         String[] timeSplit = time.split(" |:");
@@ -23,7 +23,11 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         if (hour < 1 || hour > 12){
             throw new HandledIllegalValueException("Hour must be in the range [1,12] ");
         }
-        hour += (timeSplit[2].contains("PM") ? 12 : 0);
+        if (hour == 12 && timeSplit[2].equals("AM")) {
+            hour = 0;
+        } else {
+            hour += (timeSplit[2].contains("PM") ? 12 : 0);
+        }
         int year = Integer.parseInt(dateSplit[0]);
         Month month = Month.of(Integer.parseInt(dateSplit[1]));
         int day = Integer.parseInt(dateSplit[2]);
@@ -39,7 +43,7 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         // but there's no good way to add all the proper escapes for java, and
         // java has no raw strings
         if(!email.matches(emailRegex)){
-            throw new HandledIllegalValueException("Email is invalid, please try again");
+            throw new HandledIllegalValueException("Email %s is invalid".formatted(email));
         }
         return email;
     }
