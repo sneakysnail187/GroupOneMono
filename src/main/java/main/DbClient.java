@@ -61,25 +61,32 @@ public class DbClient {
             }
             return output;
         } catch(HandledIllegalValueException e){
+            //unreachable branch
             assert false;
         }
         return Collections.emptyList();
     }
 
-    public List<Participant> getParticipants(String eventId) throws SQLException, HandledIllegalValueException {
-        List<Participant> output = new ArrayList<Participant>();
-        ResultSet results = conn.createStatement().executeQuery(
-            "SELECT * FROM participants WHERE event_id=\"" + eventId +"\""
-        );
-        while (results.next()) {
-            output.add(Participant.create(
-                results.getString("id"),
-                eventId,
-                results.getString("name"),
-                results.getString("email")
-            ));
+    public List<Participant> getParticipants(String eventId) throws SQLException {
+        try {
+            List<Participant> output = new ArrayList<Participant>();
+            ResultSet results = conn.createStatement().executeQuery(
+                    "SELECT * FROM participants WHERE event_id=\"" + eventId + "\""
+            );
+            while (results.next()) {
+                output.add(Participant.create(
+                        results.getString("id"),
+                        eventId,
+                        results.getString("name"),
+                        results.getString("email")
+                ));
+            }
+            return output;
+        } catch(HandledIllegalValueException e){
+            //unreachable
+            assert false;
         }
-        return output;
+        return Collections.emptyList();
     }
 
     public void addEvent(Event e) throws SQLException {
