@@ -2,6 +2,7 @@ package main;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import main.Event.HandledIllegalValueException;
@@ -42,22 +43,27 @@ public class DbClient {
         );
     }
 
-    public List<Event> getEvents() throws SQLException, HandledIllegalValueException {
-        List<Event> output = new ArrayList<Event>();
-        ResultSet results = conn.createStatement().executeQuery(
-            "SELECT * FROM events"
-        );
-        while (results.next()) {
-            output.add(Event.create(
-                results.getString("id"),
-                (new SimpleDateFormat("yyyy-MM-dd")).format(results.getDate("date")),
-                (new SimpleDateFormat("hh:mm a")).format(results.getTime("time")),
-                results.getString("title"),
-                results.getString("description"),
-                results.getString("host_email")
-            ));
+    public List<Event> getEvents() throws SQLException {
+        try {
+            List<Event> output = new ArrayList<Event>();
+            ResultSet results = conn.createStatement().executeQuery(
+                    "SELECT * FROM events"
+            );
+            while (results.next()) {
+                output.add(Event.create(
+                        results.getString("id"),
+                        (new SimpleDateFormat("yyyy-MM-dd")).format(results.getDate("date")),
+                        (new SimpleDateFormat("hh:mm a")).format(results.getTime("time")),
+                        results.getString("title"),
+                        results.getString("description"),
+                        results.getString("host_email")
+                ));
+            }
+            return output;
+        } catch(HandledIllegalValueException e){
+            assert false;
         }
-        return output;
+        return Collections.emptyList();
     }
 
     public List<Participant> getParticipants(String eventId) throws SQLException, HandledIllegalValueException {
