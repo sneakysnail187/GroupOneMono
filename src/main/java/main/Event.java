@@ -23,11 +23,7 @@ public record Event(UUID uuid, LocalDateTime eventDateTime, String title, String
         if (hour < 1 || hour > 12){
             throw new HandledIllegalValueException("Hour must be in the range [1,12] ");
         }
-        if (hour == 12 && timeSplit[2].equals("AM")) {
-            hour = 0;
-        } else {
-            hour += (timeSplit[2].contains("PM") ? 12 : 0);
-        }
+        hour += (timeSplit[2].contains("PM") ? 12 : 0);
         int year = Integer.parseInt(dateSplit[0]);
         Month month = Month.of(Integer.parseInt(dateSplit[1]));
         int day = Integer.parseInt(dateSplit[2]);
